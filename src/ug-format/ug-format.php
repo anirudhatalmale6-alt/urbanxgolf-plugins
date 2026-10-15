@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: urbanXgolf — Layout (Bildformat 3:2, Copyright)
- * Description: Einheitliches Fotoformat 3:2 (Parcours-Kacheln, Bilderraster "Über uns", CSS-Klasse ug-32) und der Copyright-Hinweis unter dem Logo: klein, rechtsbündig, auf einer Höhe mit der Signatur.
- * Version:     1.1.0
+ * Description: Einheitliches Fotoformat 3:2 (Parcours-Kacheln, Bilderraster "Über uns", CSS-Klasse ug-32) und der Copyright-Hinweis unter dem Logo: zweizeilig, klein, rechtsbündig, auf einer Höhe mit der Signatur.
+ * Version:     1.2.0
  * Author:      Anirudha Talmale
  *
  * The client wants every photograph on the site in one format, 3:2. Most already
@@ -106,8 +106,63 @@ function ug_format_copyright_markieren( $content, $widget ) {
 		return $content;
 	}
 	$neu = preg_replace( '~<p(\s|>)~', '<p class="ug-copyright"$1', $content, 1, $treffer );
-	return $treffer ? $neu : '<div class="ug-copyright">' . $content . '</div>';
+	$neu = $treffer ? $neu : '<div class="ug-copyright">' . $content . '</div>';
+
+	// Two lines, and the break exactly where he asked for it: "Alle Rechte
+	// vorbehalten" on a line of its own. Balanced wrapping got there on my copy
+	// of the site, but only by width — on his, where the notice was not yet in
+	// the narrow logo column, it stayed on one line. A real break does not
+	// depend on how wide anything is.
+	if ( stripos( $neu, '<br' ) === false ) {
+		$neu = preg_replace( '~\s*(Alle Rechte vorbehalten)~u', '<br>$1', $neu, 1 );
+	}
+	return $neu;
 }
+
+/**
+ * Put the notice under the logo, wherever it was placed in Elementor.
+ *
+ * On his site the notice ended up as its own element below the whole footer
+ * row, not inside the logo column — his screenshot shows it at the far right
+ * under everything. Elementor's drag and drop between nested containers is
+ * exactly the fiddly part he could not get to work, so rather than send him
+ * back into it, the page moves the element into the logo column as it loads.
+ *
+ * The logo column is found as the container of the footer's first image — the
+ * logo is the only picture in the footer. If the notice is already there,
+ * nothing happens. Without JavaScript it stays where Elementor put it, which is
+ * still a correct, readable footer.
+ */
+function ug_format_copyright_js() {
+	if ( is_admin() ) {
+		return;
+	}
+	$js = <<<'JS'
+(function(){
+  'use strict';
+  function verschieben(){
+    var f = document.querySelector('footer');
+    if (!f) { return; }
+    var text = f.querySelector('.ug-copyright');
+    var bild = f.querySelector('.elementor-widget-image');
+    if (!text || !bild) { return; }
+    var widget = text.closest('.elementor-widget');
+    var spalte = bild.parentElement;
+    if (!widget || !spalte || spalte.contains(widget)) { return; }
+    spalte.appendChild(widget);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', verschieben);
+  } else {
+    verschieben();
+  }
+}());
+JS;
+	wp_register_script( 'ug-format-copyright', false, [], '1.2.0', true );
+	wp_enqueue_script( 'ug-format-copyright' );
+	wp_add_inline_script( 'ug-format-copyright', $js );
+}
+add_action( 'wp_enqueue_scripts', 'ug_format_copyright_js', 99 );
 add_filter( 'elementor/widget/render_content', 'ug_format_copyright_markieren', 20, 2 );
 
 function ug_format_copyright_css() {
@@ -156,7 +211,7 @@ footer .ug-copyright {
 		padding-top: 18px;
 	}
 }';
-	wp_register_style( 'ug-format-copyright', false, [], '1.1.0' );
+	wp_register_style( 'ug-format-copyright', false, [], '1.2.0' );
 	wp_enqueue_style( 'ug-format-copyright' );
 	wp_add_inline_style( 'ug-format-copyright', $css );
 }
