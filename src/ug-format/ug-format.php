@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: urbanXgolf — Layout (Bildformat 3:2, Copyright)
- * Description: Einheitliches Fotoformat 3:2 (Parcours-Kacheln, Bilderraster "Über uns", CSS-Klasse ug-32) und der Copyright-Hinweis unter dem Logo: zweizeilig, klein, linksbündig, auf einer Höhe mit der Signatur.
- * Version:     1.3.1
+ * Description: Einheitliches Fotoformat 3:2 (Parcours-Kacheln, Bilderraster "Über uns", CSS-Klasse ug-32) und der Copyright-Hinweis unter dem Logo: zweizeilig, klein, linksbündig, auf einer Höhe mit der Signatur. Dazu: lesbares Handy-Menü und saubere Adresszeile im Footer.
+ * Version:     1.4.0
  * Author:      Anirudha Talmale
  *
  * The client wants every photograph on the site in one format, 3:2. Most already
@@ -243,3 +243,77 @@ footer .ug-copyright {
 	wp_add_inline_style( 'ug-format-copyright', $css );
 }
 add_action( 'wp_enqueue_scripts', 'ug_format_copyright_css', 99 );
+
+
+/* -------------------------------------------------------------------------
+ * The phone menu (1.4)
+ *
+ * Reported by a visitor on her phone: the menu opened, but showed nothing
+ * except "Start". Every other item was there — white text on a white panel.
+ * The menu colour was set to white for the dark desktop header; the dropdown
+ * that replaces it below 1024 px keeps the plugin's default white background,
+ * and only the current page's item, drawn in blue, could be seen. My build, and
+ * never caught because I never looked at the menu opened on a phone.
+ *
+ * The panel now takes the header's own dark colour, so the white text reads
+ * as it does on the desktop and the current page stays blue, as it is there.
+ * The selector repeats .hfe-dropdown to outrank the plugin's generated rule,
+ * which names the header by its post id — something this file cannot know.
+ * Four repeats were not enough: that rule reaches the same weight (five classes,
+ * three elements) and is printed later in the page, so it won the tie and the
+ * panel stayed white. Six repeats win outright, wherever it is printed.
+ * ---------------------------------------------------------------------- */
+function ug_format_menu_css() {
+	if ( is_admin() ) {
+		return;
+	}
+	$css = '
+@media (max-width: 1024px) {
+	header nav.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown,
+	header nav.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown .hfe-nav-menu,
+	header nav.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown li.menu-item {
+		background-color: #191718;
+	}
+	header nav.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown a.hfe-menu-item {
+		background-color: #191718;
+		color: #FFFFFF;
+		border-bottom: 1px solid rgba(255, 255, 255, .12);
+	}
+	header nav.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown li.current-menu-item > a.hfe-menu-item {
+		color: #0A62D0;
+	}
+	header nav.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown a.hfe-menu-item:hover,
+	header nav.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown.hfe-dropdown a.hfe-menu-item:focus-visible {
+		background-color: #242123;
+	}
+}';
+	wp_register_style( 'ug-format-menu', false, [], '1.4.0' );
+	wp_enqueue_style( 'ug-format-menu' );
+	wp_add_inline_style( 'ug-format-menu', $css );
+}
+add_action( 'wp_enqueue_scripts', 'ug_format_menu_css', 99 );
+
+
+/* -------------------------------------------------------------------------
+ * The address line in the footer (1.4)
+ *
+ * The postcode was pushed onto its own line with a long row of spaces after
+ * "Wertgasse 11". In the narrow desktop column the spaces fill the line and the
+ * postcode wraps where intended; on a phone the column is wider, the spaces fit,
+ * and the line broke as "Wertgasse 11 45468 Mülheim" / "an der Ruhr".
+ *
+ * A row of three or more spaces directly before a five-digit postcode is
+ * turned into a real line break, which holds at every width. Trailing spaces
+ * at the end of a paragraph go too. Text without such a row is untouched, and
+ * the decision looks at this widget's own text only (see the cache note above).
+ * ---------------------------------------------------------------------- */
+function ug_format_adresse( $content, $widget ) {
+	if ( ! is_object( $widget ) || ! method_exists( $widget, 'get_name' ) || $widget->get_name() !== 'text-editor' ) {
+		return $content;
+	}
+	$leer = '(?:\x{00A0}|&nbsp;|&#160;|\s)';
+	$neu  = preg_replace( '~' . $leer . '{3,}(?=\d{5}\b)~u', '<br>', $content );
+	$neu  = preg_replace( '~' . $leer . '{2,}(</p>)~u', '$1', (string) $neu );
+	return is_string( $neu ) ? $neu : $content;
+}
+add_filter( 'elementor/widget/render_content', 'ug_format_adresse', 20, 2 );
