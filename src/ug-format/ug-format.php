@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: urbanXgolf — Layout (Bildformat 3:2, Copyright)
- * Description: Einheitliches Fotoformat 3:2 (Parcours-Kacheln, Bilderraster "Über uns", CSS-Klasse ug-32) und der Copyright-Hinweis unter dem Logo: zweizeilig, klein, rechtsbündig, auf einer Höhe mit der Signatur.
- * Version:     1.2.0
+ * Description: Einheitliches Fotoformat 3:2 (Parcours-Kacheln, Bilderraster "Über uns", CSS-Klasse ug-32) und der Copyright-Hinweis unter dem Logo: zweizeilig, klein, linksbündig, auf einer Höhe mit der Signatur.
+ * Version:     1.3.1
  * Author:      Anirudha Talmale
  *
  * The client wants every photograph on the site in one format, 3:2. Most already
@@ -148,8 +148,25 @@ function ug_format_copyright_js() {
     if (!text || !bild) { return; }
     var widget = text.closest('.elementor-widget');
     var spalte = bild.parentElement;
-    if (!widget || !spalte || spalte.contains(widget)) { return; }
-    spalte.appendChild(widget);
+    if (widget && spalte && !spalte.contains(widget)) { spalte.appendChild(widget); }
+    einzug(text, bild.querySelector('img'));
+  }
+  // Where the visible logo begins, measured from the notice's own left edge.
+  var RAND = 47 / 660;   // transparent margin of logo-white.png, each side
+  function einzug(text, img) {
+    if (!img) { return; }
+    var setzen = function () {
+      var r = img.getBoundingClientRect();
+      var t = text.getBoundingClientRect();
+      if (!r.width) { return; }
+      var px = Math.max(0, Math.round(r.left - t.left + r.width * RAND));
+      text.style.setProperty('--ug-logo-einzug', px + 'px');
+    };
+    if (img.complete) { setzen(); } else { img.addEventListener('load', setzen); }
+    var timer;
+    window.addEventListener('resize', function () {
+      clearTimeout(timer); timer = setTimeout(setzen, 120);
+    }, { passive: true });
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', verschieben);
@@ -158,7 +175,7 @@ function ug_format_copyright_js() {
   }
 }());
 JS;
-	wp_register_script( 'ug-format-copyright', false, [], '1.2.0', true );
+	wp_register_script( 'ug-format-copyright', false, [], '1.3.0', true );
 	wp_enqueue_script( 'ug-format-copyright' );
 	wp_add_inline_script( 'ug-format-copyright', $js );
 }
@@ -189,11 +206,21 @@ footer .ug-copyright {
 	color: #8a9096;
 	opacity: .85;
 	letter-spacing: .01em;
-	text-align: right;
+	/* 1.3: left, not right — his call after seeing it on the page. Flush with
+	   the left edge of the logo, which is also where the footer text begins. */
+	text-align: left;
 	/* The column is only as wide as the logo, so the notice takes two lines.
 	   Without this it broke as "... Alle Rechte / vorbehalten." — one word left
 	   on its own. Balanced, it splits at the sentence. */
 	text-wrap: balance;
+}
+/* The logo file has a transparent margin of 7.1 % on each side (47 of 660 px),
+   so its picture does not start where its box starts. Aligned to the box, the
+   notice stuck out about 18 px to the left of the visible logo — measured as
+   "0 px off" and plainly wrong in the screenshot. The script below sets the
+   exact indent from the rendered logo; 7.121 % is the fallback without it. */
+@media (min-width: 1025px) {
+	footer .ug-copyright { padding-left: var(--ug-logo-einzug, 7.121%); }
 }
 @media (max-width: 1024px) {
 	footer .ug-copyright { text-align: center; }
@@ -211,7 +238,7 @@ footer .ug-copyright {
 		padding-top: 18px;
 	}
 }';
-	wp_register_style( 'ug-format-copyright', false, [], '1.2.0' );
+	wp_register_style( 'ug-format-copyright', false, [], '1.3.0' );
 	wp_enqueue_style( 'ug-format-copyright' );
 	wp_add_inline_style( 'ug-format-copyright', $css );
 }

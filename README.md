@@ -6,7 +6,7 @@ Drei kleine Plugins für urbanxgolf.de. Jedes lässt sich unter *Plugins* einzel
 |---|---|---|
 | [ug-bildschutz.zip](https://github.com/anirudhatalmale6-alt/urbanxgolf-plugins/raw/main/ug-bildschutz.zip) | urbanXgolf — Bildschutz | Rechtsklick, Ziehen und Halte-Menü auf Fotos abgeschaltet; Fotos höchstens 1536 px breit |
 | [ug-fusszeile.zip](https://github.com/anirudhatalmale6-alt/urbanxgolf-plugins/raw/main/ug-fusszeile.zip) | urbanXgolf — Signatur in der Fußzeile (1.2) | Dezente Zeile unter der Spalte „Schnellzugriff“ — nach dem Ersetzen in Elementor unter *Werkzeuge* einmal *Clear Files & Data* (Dateien und Daten löschen) klicken |
-| [ug-format.zip](https://github.com/anirudhatalmale6-alt/urbanxgolf-plugins/raw/main/ug-format.zip) | urbanXgolf — Layout (1.2) | Fotos in 3:2 (Parcours-Kacheln, Bilderraster, CSS-Klasse `ug-32`); Copyright zweizeilig, klein und rechtsbündig unter dem Logo (auch wenn es in Elementor woanders steht), auf einer Höhe mit der Signatur |
+| [ug-format.zip](https://github.com/anirudhatalmale6-alt/urbanxgolf-plugins/raw/main/ug-format.zip) | urbanXgolf — Layout (1.3.1) | Fotos in 3:2 (Parcours-Kacheln, Bilderraster, CSS-Klasse `ug-32`); Copyright zweizeilig, klein und linksbündig unter dem Logo (auch wenn es in Elementor woanders steht), auf einer Höhe mit der Signatur |
 
 ## Installieren
 1. ZIP-Datei herunterladen (nicht entpacken)
