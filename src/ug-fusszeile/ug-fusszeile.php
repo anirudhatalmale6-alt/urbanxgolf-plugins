@@ -2,7 +2,7 @@
 /**
  * Plugin Name: urbanXgolf — Signatur in der Fußzeile
  * Description: Setzt eine dezente Zeile "Website by Anirudha Talmale" unter die Spalte "Schnellzugriff" im Footer. Kann jederzeit deaktiviert werden.
- * Version:     1.1.0
+ * Version:     1.2.0
  * Author:      Anirudha Talmale
  *
  * The client offered this himself. It is written as a separate plugin for one
@@ -76,6 +76,13 @@ function ug_fusszeile_css() {
 		. '.ug-signatur{margin:6px 0 0;font-size:13px;line-height:1.6;'
 		. 'color:#8a9096;letter-spacing:.01em;opacity:.85;text-transform:none}'
 		. '.ug-signatur-links{margin-top:22px}'
+		// 1.2: on one line with the copyright under the logo. The list widget
+		// grows to the foot of its column and the line sits at its bottom; the
+		// columns themselves are made equally tall by the layout plugin. Without
+		// that plugin nothing changes here — the line simply stays under the list.
+		. '@media (min-width:768px){'
+		. 'footer .elementor-widget:has(> .ug-signatur-links){flex-grow:1;display:flex;flex-direction:column}'
+		. 'footer .ug-signatur-links{margin-top:auto;padding-top:22px}}'
 		. '@media (max-width:767px){.ug-signatur{font-size:12px;margin-top:4px}'
 		. '.ug-signatur-links{margin-top:18px}}'
 		. "</style>\n";
