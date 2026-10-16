@@ -2,7 +2,7 @@
 /**
  * Plugin Name: urbanXgolf — Layout (Bildformat 3:2, Copyright)
  * Description: Einheitliches Fotoformat 3:2 (Parcours-Kacheln, Bilderraster "Über uns", CSS-Klasse ug-32) und der Copyright-Hinweis unter dem Logo: zweizeilig, klein, linksbündig, auf einer Höhe mit der Signatur. Dazu: lesbares Handy-Menü und saubere Adresszeile im Footer.
- * Version:     1.4.0
+ * Version:     1.5.0
  * Author:      Anirudha Talmale
  *
  * The client wants every photograph on the site in one format, 3:2. Most already
@@ -317,3 +317,78 @@ function ug_format_adresse( $content, $widget ) {
 	return is_string( $neu ) ? $neu : $content;
 }
 add_filter( 'elementor/widget/render_content', 'ug_format_adresse', 20, 2 );
+
+
+/* -------------------------------------------------------------------------
+ * "Über uns": the picture grid beside "Gute Idee. Neu gedacht." (1.5)
+ *
+ * His wish: room for two more rows of photos beside the long text, without
+ * placeholders standing in them. A row exists only once a photo is in it; he
+ * adds one by duplicating a photo in Elementor and swapping the picture. The
+ * last, part-filled row is centred — one photo in the middle, two close
+ * together in the middle (his choice, 16 Oct).
+ *
+ * A three-column grid cannot put anything "between" two columns, so it gets
+ * six narrow tracks and every photo spans two. A full row is 1-2, 3-4, 5-6;
+ * one left over starts at 3, two left over at 2 and 4.
+ *
+ * !important on purpose, and the reason is measured, not assumed: the theme's
+ * thumbs.js writes grid-column inline on these photos and rewrites it on every
+ * resize, and its phone rule carries !important as well. Built and tested
+ * against his own page from the export of 16 Oct (nine photos, id ugr0007),
+ * not against my outdated copy.
+ * ---------------------------------------------------------------------- */
+function ug_format_raster_css() {
+	if ( is_admin() ) {
+		return;
+	}
+	$css = '
+#page > .elementor .elementor-element-ugr0007 { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
+#page > .elementor .elementor-element-ugr0007 > * { grid-column: span 2 !important; }
+#page > .elementor .elementor-element-ugr0007 > .ug-rest-mitte  { grid-column: 3 / span 2 !important; }
+#page > .elementor .elementor-element-ugr0007 > .ug-rest-links  { grid-column: 2 / span 2 !important; }
+#page > .elementor .elementor-element-ugr0007 > .ug-rest-rechts { grid-column: 4 / span 2 !important; }
+
+/* "Unterwegs seit 2026": the five photos sit on a photo band — a picture on a
+   picture, so they get the white frame the thumbnails on "Spielen" have. 4:3
+   rather than 3:2: his files are 800 x 600, and in 4:3 the preview shows the
+   whole photograph instead of cutting off top and bottom (his call, 16 Oct). */
+#page > .elementor .elementor-element-ugr0011 img {
+	display: block;
+	width: 100%;
+	height: auto;
+	aspect-ratio: 4 / 3;
+	object-fit: cover;
+	max-height: none;
+	border: 5px solid #FFFFFF;
+	border-radius: 12px;
+	box-shadow: 0 8px 22px rgba(0, 0, 0, .28);
+	box-sizing: border-box;
+}
+@media (max-width: 767px) {
+	#page > .elementor .elementor-element-ugr0011 img { border-width: 4px; border-radius: 10px; }
+}';
+	$js = <<<'JS'
+(function(){
+  'use strict';
+  function ordnen(){
+    [].forEach.call(document.querySelectorAll('#page > .elementor .elementor-element-ugr0007'), function(raster){
+      // Only the photos: inside the editor Elementor adds overlays and handles.
+      var b = [].slice.call(raster.children).filter(function(el){ return !!el.querySelector('img'); });
+      b.forEach(function(el){ el.classList.remove('ug-rest-mitte','ug-rest-links','ug-rest-rechts'); });
+      var rest = b.length % 3;
+      if (rest === 1) { b[b.length - 1].classList.add('ug-rest-mitte'); }
+      if (rest === 2) { b[b.length - 2].classList.add('ug-rest-links'); b[b.length - 1].classList.add('ug-rest-rechts'); }
+    });
+  }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', ordnen); } else { ordnen(); }
+}());
+JS;
+	wp_register_style( 'ug-format-raster', false, [], '1.5.0' );
+	wp_enqueue_style( 'ug-format-raster' );
+	wp_add_inline_style( 'ug-format-raster', $css );
+	wp_register_script( 'ug-format-raster', false, [], '1.5.0', true );
+	wp_enqueue_script( 'ug-format-raster' );
+	wp_add_inline_script( 'ug-format-raster', $js );
+}
+add_action( 'wp_enqueue_scripts', 'ug_format_raster_css', 99 );
