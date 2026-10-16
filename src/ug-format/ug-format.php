@@ -2,7 +2,7 @@
 /**
  * Plugin Name: urbanXgolf — Layout (Bildformat 3:2, Copyright)
  * Description: Einheitliches Fotoformat 3:2 (Parcours-Kacheln, Bilderraster "Über uns", CSS-Klasse ug-32) und der Copyright-Hinweis unter dem Logo: zweizeilig, klein, linksbündig, auf einer Höhe mit der Signatur. Dazu: lesbares Handy-Menü und saubere Adresszeile im Footer.
- * Version:     1.6.0
+ * Version:     1.7.0
  * Author:      Anirudha Talmale
  *
  * The client wants every photograph on the site in one format, 3:2. Most already
@@ -389,13 +389,25 @@ function ug_format_raster_css() {
       if (rest === 2) { b[b.length - 2].classList.add('ug-rest-links'); b[b.length - 1].classList.add('ug-rest-rechts'); }
     });
   }
-  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', ordnen); } else { ordnen(); }
+  // 1.7: also when a photo is added later. In the Elementor editor a pasted or
+  // duplicated photo is inserted into the page without a reload, so arranging
+  // once on load left it flush left until the page was opened again — which is
+  // exactly what he saw when he tried it. Watching the grid for added or
+  // removed children re-arranges it the moment the editor inserts the photo.
+  function beobachten(){
+    ordnen();
+    if (!window.MutationObserver) { return; }
+    var warten;
+    new MutationObserver(function(){ clearTimeout(warten); warten = setTimeout(ordnen, 50); })
+      .observe(document.body, { childList: true, subtree: true });
+  }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', beobachten); } else { beobachten(); }
 }());
 JS;
-	wp_register_style( 'ug-format-raster', false, [], '1.5.0' );
+	wp_register_style( 'ug-format-raster', false, [], '1.7.0' );
 	wp_enqueue_style( 'ug-format-raster' );
 	wp_add_inline_style( 'ug-format-raster', $css );
-	wp_register_script( 'ug-format-raster', false, [], '1.5.0', true );
+	wp_register_script( 'ug-format-raster', false, [], '1.7.0', true );
 	wp_enqueue_script( 'ug-format-raster' );
 	wp_add_inline_script( 'ug-format-raster', $js );
 }
