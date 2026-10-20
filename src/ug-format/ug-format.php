@@ -2,7 +2,7 @@
 /**
  * Plugin Name: urbanXgolf — Layout (Bildformat 3:2, Copyright)
  * Description: Einheitliches Fotoformat 3:2 (Parcours-Kacheln, Bilderraster "Über uns", CSS-Klasse ug-32) und der Copyright-Hinweis unter dem Logo: zweizeilig, klein, linksbündig, auf einer Höhe mit der Signatur. Dazu: lesbares Handy-Menü und saubere Adresszeile im Footer.
- * Version:     1.7.0
+ * Version:     1.8.0
  * Author:      Anirudha Talmale
  *
  * The client wants every photograph on the site in one format, 3:2. Most already
@@ -412,3 +412,50 @@ JS;
 	wp_add_inline_script( 'ug-format-raster', $js );
 }
 add_action( 'wp_enqueue_scripts', 'ug_format_raster_css', 99 );
+
+
+/* -------------------------------------------------------------------------
+ * The DE / EN switch in the header (1.8)
+ *
+ * There is no English version yet, so the choice offered nothing — three
+ * people he asked for an opinion pointed it out. Hidden by default; a
+ * checkbox under Einstellungen > Allgemein brings it back the day an English
+ * version exists, without anyone touching the header.
+ *
+ * The whole column goes, not just the two letters: hiding only the switch
+ * left its 16 % column standing empty at the right of the header. Without it
+ * the menu column takes the room, so the menu ends at the right edge — on a
+ * phone the menu button moves to the edge the same way.
+ * ---------------------------------------------------------------------- */
+function ug_format_sprachwahl_zeigen() {
+	return (bool) get_option( 'ug_sprachwahl_zeigen', 0 );
+}
+
+function ug_format_sprachwahl_einstellung() {
+	register_setting( 'general', 'ug_sprachwahl_zeigen', [
+		'type'              => 'boolean',
+		'default'           => 0,
+		'sanitize_callback' => function ( $v ) { return $v ? 1 : 0; },
+	] );
+	add_settings_field( 'ug_sprachwahl_zeigen', 'Sprachauswahl DE / EN', function () {
+		printf(
+			'<label><input type="checkbox" name="ug_sprachwahl_zeigen" value="1" %s> Im Header anzeigen</label>'
+			. '<p class="description">Erst einschalten, wenn es eine englische Fassung der Website gibt.</p>',
+			checked( ug_format_sprachwahl_zeigen(), true, false )
+		);
+	}, 'general' );
+}
+add_action( 'admin_init', 'ug_format_sprachwahl_einstellung' );
+
+function ug_format_sprachwahl_css() {
+	if ( is_admin() || ug_format_sprachwahl_zeigen() ) {
+		return;
+	}
+	$css = '
+header .e-con:has(> .elementor-widget .ug-lang) { display: none !important; }
+header .e-con:has(> .elementor-widget-navigation-menu) { flex-grow: 1; }';
+	wp_register_style( 'ug-format-sprachwahl', false, [], '1.8.0' );
+	wp_enqueue_style( 'ug-format-sprachwahl' );
+	wp_add_inline_style( 'ug-format-sprachwahl', $css );
+}
+add_action( 'wp_enqueue_scripts', 'ug_format_sprachwahl_css', 99 );
