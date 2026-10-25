@@ -2,7 +2,7 @@
 /**
  * Plugin Name: urbanXgolf — Layout (Bildformat 3:2, Copyright)
  * Description: Einheitliches Fotoformat 3:2 (Parcours-Kacheln, Bilderraster "Über uns", CSS-Klasse ug-32) und der Copyright-Hinweis unter dem Logo: zweizeilig, klein, linksbündig, auf einer Höhe mit der Signatur. Dazu: lesbares Handy-Menü und saubere Adresszeile im Footer.
- * Version:     1.9.0
+ * Version:     1.10.0
  * Author:      Anirudha Talmale
  *
  * The client wants every photograph on the site in one format, 3:2. Most already
@@ -344,6 +344,20 @@ function ug_format_raster_css() {
 	}
 	$css = '
 #page > .elementor .elementor-element-ugr0007 { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
+
+/* "Spielen" (1.10): the footnote "* Clubhaus = …" at the top of the map card.
+   On a tablet the card keeps its 104 px corners but its padding shrinks to
+   7 px at the top and 32 px at the side — the first line then lies inside the
+   curve, which hides everything left of x = 66 px, the asterisk included.
+   Found by his brother on a tablet; measured at 768, 820 and 1024 px. Pushed
+   down until every line clears the curve; on a phone (40 px corners) it
+   cleared by a single pixel, so it gets a little room as well. */
+@media (min-width: 768px) and (max-width: 1024px) {
+	#page > .elementor .elementor-element-ug000bc { margin-top: 36px; }
+}
+@media (max-width: 767px) {
+	#page > .elementor .elementor-element-ug000bc { margin-top: 8px; }
+}
 
 /* "Kontakt" (1.6): the photo began level with the yellow rule, 56 px above the
    heading — measured on his page at 1400, 1100 and 820 px. Same remedy as the
