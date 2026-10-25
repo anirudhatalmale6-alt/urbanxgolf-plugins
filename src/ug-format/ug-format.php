@@ -2,7 +2,7 @@
 /**
  * Plugin Name: urbanXgolf — Layout (Bildformat 3:2, Copyright)
  * Description: Einheitliches Fotoformat 3:2 (Parcours-Kacheln, Bilderraster "Über uns", CSS-Klasse ug-32) und der Copyright-Hinweis unter dem Logo: zweizeilig, klein, linksbündig, auf einer Höhe mit der Signatur. Dazu: lesbares Handy-Menü und saubere Adresszeile im Footer.
- * Version:     1.8.0
+ * Version:     1.9.0
  * Author:      Anirudha Talmale
  *
  * The client wants every photograph on the site in one format, 3:2. Most already
@@ -459,3 +459,55 @@ header .e-con:has(> .elementor-widget-navigation-menu) { flex-grow: 1; }';
 	wp_add_inline_style( 'ug-format-sprachwahl', $css );
 }
 add_action( 'wp_enqueue_scripts', 'ug_format_sprachwahl_css', 99 );
+
+
+/* -------------------------------------------------------------------------
+ * Enlarge on click for the photo rows on photo bands (1.9)
+ *
+ * His brother noticed it: the photos under "So verschieden wie die Städte
+ * selbst" on "Spielen" could not be enlarged, while every other photo on the
+ * site could. The enlarging script only knew three places — the course cards,
+ * the press cuttings and the grid on "Über uns". The same row exists on "Über
+ * uns" too ("Unterwegs seit 2026"), with the same gap, so both are handled.
+ *
+ * The existing enlarged view is reused rather than a second one built: it
+ * opens anything carrying data-ug-full. This runs immediately before that
+ * script (same footer, "before" position), so the photos are marked by the
+ * time it looks for them — the order is fixed, not left to chance.
+ *
+ * The file opened is the largest size the page already offers in srcset —
+ * which the image protection caps at 1536 px, so no original leaves the server.
+ * ---------------------------------------------------------------------- */
+function ug_format_bildreihen_gross() {
+	if ( is_admin() ) {
+		return;
+	}
+	$js = <<<'JS'
+(function(){
+  'use strict';
+  var REIHEN = '#page > .elementor .elementor-element-ugx0006 img, #page > .elementor .elementor-element-ugr0011 img';
+  function groesste(img){
+    var best = img.getAttribute('src'), breite = 0;
+    (img.getAttribute('srcset') || '').split(',').forEach(function(teil){
+      var st = teil.trim().split(/\s+/), w = parseInt((st[1] || '').replace('w',''), 10);
+      if (st[0] && w && w > breite) { breite = w; best = st[0]; }
+    });
+    return best;
+  }
+  [].forEach.call(document.querySelectorAll(REIHEN), function(img){
+    if (img.dataset.ugFull) { return; }
+    img.dataset.ugFull = groesste(img);
+    img.dataset.ugTitel = img.getAttribute('alt') || '';
+    img.style.cursor = 'zoom-in';
+    img.setAttribute('tabindex', '0');
+    img.setAttribute('role', 'button');
+    img.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); img.click(); }
+    });
+  });
+}());
+JS;
+	wp_add_inline_script( 'ug-bildbox', $js, 'before' );
+}
+// After the theme has enqueued the enlarging script, so its handle exists.
+add_action( 'wp_enqueue_scripts', 'ug_format_bildreihen_gross', 100 );
